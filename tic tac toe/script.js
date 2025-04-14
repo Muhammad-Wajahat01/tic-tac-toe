@@ -1,67 +1,115 @@
-console.log("Welcome to Tic Tac Toe")
-let music = new Audio("music.mp3")
-let audioTurn = new Audio("ting.mp3")
-let gameover = new Audio("gameover.mp3")
-let turn = "X"
-let isgameover = false;
+console.log("Tic Tac Toe Game");
 
-// Function to change the turn
-const changeTurn = ()=>{
-    return turn === "X"? "0": "X"
-}
+let turn = "X";
+let isGameOver = false;
 
-// Function to check for a win
-const checkWin = ()=>{
-    let boxtext = document.getElementsByClassName('boxtext');
-    let wins = [
-        [0, 1, 2, 5, 5, 0],
-        [3, 4, 5, 5, 15, 0],
-        [6, 7, 8, 5, 25, 0],
-        [0, 3, 6, -5, 15, 90],
-        [1, 4, 7, 5, 15, 90],
-        [2, 5, 8, 15, 15, 90],
-        [0, 4, 8, 5, 15, 45],
-        [2, 4, 6, 5, 15, 135],
-    ]
-    wins.forEach(e =>{
-        if((boxtext[e[0]].innerText === boxtext[e[1]].innerText) && (boxtext[e[2]].innerText === boxtext[e[1]].innerText) && (boxtext[e[0]].innerText !== "") ){
-            document.querySelector('.info').innerText = boxtext[e[0]].innerText + " Won"
-            isgameover = true
-            document.querySelector('.imgbox').getElementsByTagName('img')[0].style.width = "200px";
-            document.querySelector(".line").style.transform = `translate(${e[3]}vw, ${e[4]}vw) rotate(${e[5]}deg)`
-            document.querySelector(".line").style.width = "20vw";
-        }
-    })
-}
+// Create an Audio object for the sound effect
+const tingSound = new Audio("ting.mp3");
 
-// Game Logic
-// music.play()
+// Function to change turn
+const changeTurn = () => (turn === "X" ? "O" : "X");
+
+// Function to check if a box has X or O
+const getBoxValue = (element) => {
+  if (element.classList.contains("x-shape")) return "X";
+  if (element.classList.contains("o-shape")) return "O";
+  return "";
+};
+
+// Check for a win
+const checkWin = () => {
+  let boxtexts = document.getElementsByClassName("boxtext");
+  let wins = [];
+
+  // Horizontal 3-in-a-rows
+  for (let row = 0; row < 6; row++) {
+    for (let col = 0; col <= 3; col++) {
+      let idx = row * 6 + col;
+      wins.push([idx, idx + 1, idx + 2]);
+    }
+  }
+
+  // Vertical 3-in-a-rows
+  for (let col = 0; col < 6; col++) {
+    for (let row = 0; row <= 3; row++) {
+      let idx = row * 6 + col;
+      wins.push([idx, idx + 6, idx + 12]);
+    }
+  }
+
+  // Diagonal ↘️
+  for (let row = 0; row <= 3; row++) {
+    for (let col = 0; col <= 3; col++) {
+      let idx = row * 6 + col;
+      wins.push([idx, idx + 7, idx + 14]);
+    }
+  }
+
+  // Diagonal ↙️
+  for (let row = 0; row <= 3; row++) {
+    for (let col = 2; col < 6; col++) {
+      let idx = row * 6 + col;
+      wins.push([idx, idx + 5, idx + 10]);
+    }
+  }
+
+  // Check all win conditions
+  wins.forEach(e => {
+    const a = boxtexts[e[0]];
+    const b = boxtexts[e[1]];
+    const c = boxtexts[e[2]];
+
+    const valA = getBoxValue(a);
+    const valB = getBoxValue(b);
+    const valC = getBoxValue(c);
+
+    if (valA && valA === valB && valB === valC) {
+      document.querySelector(".info").innerText = valA + " Won!";
+      isGameOver = true;
+      document.querySelector(".imgbox").classList.add("show");
+
+      // Highlight winning boxes
+      e.forEach(i => {
+        boxtexts[i].parentElement.classList.add("winning-box");
+      });
+    }
+  });
+};
+
+// Handle player click
 let boxes = document.getElementsByClassName("box");
-Array.from(boxes).forEach(element =>{
-    let boxtext = element.querySelector('.boxtext');
-    element.addEventListener('click', ()=>{
-        if(boxtext.innerText === ''){
-            boxtext.innerText = turn;
-            turn = changeTurn();
-            audioTurn.play();
-            checkWin();
-            if (!isgameover){
-                document.getElementsByClassName("info")[0].innerText  = "Turn for " + turn;
-            } 
-        }
-    })
-})
+Array.from(boxes).forEach(element => {
+  let boxtext = element.querySelector(".boxtext");
+  element.addEventListener("click", () => {
+    if (!boxtext.classList.contains("x-shape") && !boxtext.classList.contains("o-shape") && !isGameOver) {
+      // Play the sound effect when a box is clicked
+      tingSound.play();
 
-// Add onclick listener to reset button
-reset.addEventListener('click', ()=>{
-    let boxtexts = document.querySelectorAll('.boxtext');
-    Array.from(boxtexts).forEach(element => {
-        element.innerText = ""
-    });
-    turn = "X"; 
-    isgameover = false
-    document.querySelector(".line").style.width = "0vw";
-    document.getElementsByClassName("info")[0].innerText  = "Turn for " + turn;
-    document.querySelector('.imgbox').getElementsByTagName('img')[0].style.width = "0px"
-})
+      if (turn === "X") {
+        boxtext.classList.add("x-shape");
+      } else {
+        boxtext.classList.add("o-shape");
+      }
 
+      checkWin();
+
+      if (!isGameOver) {
+        turn = changeTurn();
+        document.querySelector(".info").innerText = "Turn for " + turn;
+      }
+    }
+  });
+});
+
+// Reset button logic
+document.getElementById("reset").addEventListener("click", () => {
+  let boxtexts = document.querySelectorAll(".boxtext");
+  Array.from(boxtexts).forEach(element => {
+    element.classList.remove("x-shape", "o-shape");
+    element.parentElement.classList.remove("winning-box");
+  });
+  turn = "X";
+  isGameOver = false;
+  document.querySelector(".info").innerText = "Turn for " + turn;
+  document.querySelector(".imgbox").classList.remove("show");
+});
